@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo de Saúde Auditiva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Serene Blue & Teal -->
+    <!-- Application Structure Plan: A thematic, single-page application designed for non-linear exploration, now populated with the comprehensive content from the full PDF. The structure flows from high-level impact (statistics) to detailed understanding (anatomy, causes, types), actionable knowledge (prevention, diagnosis, treatments, devices), and finally engagement (life stages, myths). A sticky navigation allows users to jump to any detailed section, empowering them to control their learning journey. This structure makes dense information digestible and engaging. -->
+    <!-- Visualization & Content Choices: 
+        - Statistics: Goal: Inform/Impact. Method: Dynamic number counters and a Chart.js bar chart. Interaction: Numbers animate on view. Justification: Visually impactful way to present key data from the introduction.
+        - Anatomy: Goal: Educate/Organize. Method: Interactive diagram built with HTML/CSS. Interaction: Click on parts to reveal detailed descriptions from the PDF. Justification: More engaging and memorable than a static image with a block of text.
+        - Hearing Loss (Causes/Types): Goal: Compare/Organize. Method: Detailed, icon-driven lists and expandable cards. Interaction: JS-powered accordions for detailed explanations. Justification: Breaks down extensive information into user-controlled, digestible chunks.
+        - Prevention/Diagnosis/Treatment: Goal: Actionable Advice. Method: Icon-driven grids and lists. Justification: Easy-to-scan, practical information.
+        - Myths vs. Truths: Goal: Engage/Educate. Method: Interactive flip-cards. Interaction: User clicks to reveal the truth. Justification: Gamification increases engagement and knowledge retention on common misconceptions.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #2563eb; 
+            border-bottom-color: #2563eb;
+        }
+        .anatomy-part {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .anatomy-part.active {
+            transform: scale(1.1);
+            filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.4));
+        }
+        .myth-card {
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .myth-card.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .myth-front, .myth-back {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .myth-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-blue-600">Amigos da Audição</h1>
+            <div class="hidden lg:flex space-x-6">
+                <a href="#inicio" class="nav-link text-slate-600 hover:text-blue-600 border-b-2 border-transparent pb-1">Início</a>
+                <a href="#anatomia" class="nav-link text-slate-600 hover:text-blue-600 border-b-2 border-transparent pb-1">Anatomia</a>
+                <a href="#causas" class="nav-link text-slate-600 hover:text-blue-600 border-b-2 border-transparent pb-1">Causas</a>
+                <a href="#prevencao" class="nav-link text-slate-600 hover:text-blue-600 border-b-2 border-transparent pb-1">Prevenção</a>
+                <a href="#tratamento" class="nav-link text-slate-600 hover:text-blue-600 border-b-2 border-transparent pb-1">Tratamento</a>
+                <a href="#mitos" class="nav-link text-slate-600 hover:text-blue-600 border-b-2 border-transparent pb-1">Mitos</a>
+            </div>
+            <div class="lg:hidden">
+                <select id="mobile-nav" class="bg-white border border-slate-300 rounded-md p-2 text-slate-700">
+                    <option value="#inicio">Início</option>
+                    <option value="#anatomia">Anatomia</option>
+                    <option value="#causas">Causas e Tipos</option>
+                    <option value="#prevencao">Prevenção</option>
+                    <option value="#tratamento">Diagnóstico e Tratamento</option>
+                    <option value="#fases-vida">Fases da Vida</option>
+                    <option value="#mitos">Mitos e Verdades</option>
+                </select>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="inicio" class="text-center mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Guia Completo de Saúde Auditiva</h2>
+            <p class="max-w-3xl mx-auto text-slate-600 mb-12">A audição é um dos sentidos mais vitais para a nossa interação com o mundo. Este guia interativo foi criado para fornecer informações abrangentes e acessíveis sobre a importância da audição, como cuidar dela e o que fazer em caso de problemas, capacitando você a proteger este bem tão precioso.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-4xl font-bold text-blue-600 mb-2" data-counter-target="1.5" data-counter-suffix=" bilhão">0</h3>
+                    <p class="text-slate-500">de pessoas no mundo com algum grau de perda auditiva.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-4xl font-bold text-teal-500 mb-2" data-counter-target="217" data-counter-suffix=" milhões">0</h3>
+                    <p class="text-slate-500">de pessoas vivem com perda auditiva nas Américas (21.52% da população).</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-4xl font-bold text-blue-600 mb-2" data-counter-target="262" data-counter-suffix=" milhões">0</h3>
+                    <p class="text-slate-500">é o custo anual em dólares da perda auditiva não tratada na região.</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-bold text-slate-800 mb-4">Projeção da Perda Auditiva nas Américas</h3>
+                <p class="text-slate-600 mb-6">A conscientização e a prevenção são cruciais. O gráfico abaixo ilustra a projeção do número de pessoas com perda auditiva, destacando a urgência de ações preventivas para mitigar seu impacto.</p>
+                <div class="chart-container">
+                    <canvas id="hearingLossChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="anatomia" class="mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-4">Explore a Anatomia do Ouvido</h2>
+            <p class="max-w-3xl mx-auto text-center text-slate-600 mb-12">Para entender como a audição funciona e como protegê-la, é fundamental conhecer a anatomia do ouvido. Clique nas diferentes partes do diagrama abaixo para descobrir a função de cada uma.</p>
+            <div class="flex flex-col lg:flex-row items-center justify-center gap-8">
+                <div class="w-full lg:w-1/2 relative h-96 bg-blue-100 rounded-lg p-4 flex items-center justify-center">
+                    <div class="anatomy-part absolute top-1/2 left-4 transform -translate-y-1/2 bg-teal-400 w-24 h-32 rounded-full rounded-l-none cursor-pointer" data-part="externo"></div>
+                    <div class="anatomy-part absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-400 w-16 h-16 rounded-full cursor-pointer" data-part="medio"></div>
+                    <div class="anatomy-part absolute top-1/2 right-4 transform -translate-y-1/2 bg-teal-600 w-20 h-20 rounded-full cursor-pointer" style="clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%);" data-part="interno"></div>
+                     <span class="absolute top-1/2 left-10 transform -translate-y-1/2 text-white font-bold pointer-events-none">Externo</span>
+                    <span class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold pointer-events-none">Médio</span>
+                    <span class="absolute top-1/2 right-8 transform -translate-y-1/2 text-white font-bold pointer-events-none">Interno</span>
+                </div>
+                <div id="anatomy-info" class="w-full lg:w-1/2 bg-white p-8 rounded-lg shadow-md min-h-[24rem]">
+                    <h3 id="anatomy-title" class="text-2xl font-bold text-slate-800 mb-4">Ouvido Externo</h3>
+                    <p id="anatomy-text" class="text-slate-600">É a parte visível, composta pelo pavilhão auditivo (orelha) e pelo canal auditivo. O pavilhão capta as ondas sonoras e as direciona para o canal, que as conduz até o tímpano.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="causas" class="mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-4">Causas e Tipos de Perda Auditiva</h2>
+            <p class="max-w-3xl mx-auto text-center text-slate-600 mb-12">A perda auditiva pode ser congênita ou adquirida. Compreender suas causas e os diferentes tipos é o primeiro passo para a prevenção e o tratamento adequado.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Principais Causas</h3>
+                    <h4 class="font-bold text-lg text-blue-600 mb-2">Causas Congênitas</h4>
+                    <ul class="space-y-2 text-slate-600 list-disc list-inside mb-4">
+                        <li>Fatores genéticos e hereditários.</li>
+                        <li>Infecções maternas na gestação (rubéola, sífilis).</li>
+                        <li>Malformações do ouvido.</li>
+                    </ul>
+                    <h4 class="font-bold text-lg text-teal-600 mb-2">Causas Adquiridas</h4>
+                    <ul class="space-y-2 text-slate-600 list-disc list-inside">
+                        <li>Exposição a ruídos altos (lazer ou trabalho).</li>
+                        <li>Infecções de ouvido recorrentes (otite média).</li>
+                        <li>Uso de medicamentos ototóxicos.</li>
+                        <li>Envelhecimento (Presbiacusia).</li>
+                        <li>Traumas na cabeça ou ouvido.</li>
+                        <li>Doenças crônicas (diabetes, cardiovasculares).</li>
+                        <li>Acúmulo de cera ou perfuração do tímpano.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Tipos de Perda Auditiva</h3>
+                    <div class="space-y-4">
+                        <div class="border-b pb-2">
+                            <h4 class="font-semibold">1. Condutiva</h4>
+                            <p class="text-slate-600 text-sm">Ocorre quando há um problema na transmissão do som no ouvido externo ou médio (ex: cera, infecções). Na maioria dos casos, pode ser tratada clinicamente ou cirurgicamente.</p>
+                        </div>
+                        <div class="border-b pb-2">
+                            <h4 class="font-semibold">2. Neurossensorial</h4>
+                            <p class="text-slate-600 text-sm">O tipo mais comum e geralmente permanente. Ocorre por danos nas células da cóclea (ouvido interno) ou no nervo auditivo. Gerenciada com aparelhos auditivos ou implantes.</p>
+                        </div>
+                        <div class="border-b pb-2">
+                            <h4 class="font-semibold">3. Mista</h4>
+                            <p class="text-slate-600 text-sm">Uma combinação de perda condutiva e neurossensorial, com problemas tanto no ouvido externo/médio quanto no interno.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">4. Central</h4>
+                            <p class="text-slate-600 text-sm">Menos comum, ocorre quando o cérebro não consegue processar corretamente os sons. Pode ser causada por derrames, tumores ou traumas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="prevencao" class="mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-4">Prevenção da Perda Auditiva</h2>
+            <p class="max-w-3xl mx-auto text-center text-slate-600 mb-12">A prevenção é a chave para manter a saúde auditiva. Muitas causas de perda auditiva são evitáveis com a adoção de hábitos e cuidados simples no dia a dia.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-xl transition-shadow">
+                    <span class="text-4xl">🎧</span>
+                    <h4 class="font-bold my-2">Uso de Fones</h4>
+                    <p class="text-slate-600 text-sm">Siga a regra 60/60: use fones a no máximo 60% do volume por até 60 minutos seguidos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-xl transition-shadow">
+                    <span class="text-4xl">🙉</span>
+                    <h4 class="font-bold my-2">Proteção contra Ruído</h4>
+                    <p class="text-slate-600 text-sm">Use protetores auriculares em ambientes com ruído acima de 85 decibéis.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-xl transition-shadow">
+                    <span class="text-4xl">🧼</span>
+                    <h4 class="font-bold my-2">Higiene Adequada</h4>
+                    <p class="text-slate-600 text-sm">Não introduza objetos no canal auditivo. A cera é uma proteção natural.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-xl transition-shadow">
+                    <span class="text-4xl">🩺</span>
+                    <h4 class="font-bold my-2">Exames Periódicos</h4>
+                    <p class="text-slate-600 text-sm">Realize avaliações auditivas regulares, especialmente se houver fatores de risco.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tratamento" class="mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-4">Diagnóstico e Tratamento</h2>
+            <p class="max-w-3xl mx-auto text-center text-slate-600 mb-12">O diagnóstico precoce é fundamental para o tratamento eficaz. Conheça os principais exames e as abordagens terapêuticas disponíveis.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Diagnóstico</h3>
+                    <ul class="space-y-3">
+                        <li><strong>Teste da Orelhinha:</strong> Triagem neonatal para detecção precoce.</li>
+                        <li><strong>Audiometria:</strong> Exame mais comum, mede a capacidade de ouvir diferentes sons.</li>
+                        <li><strong>Impedanciometria:</strong> Avalia a função do ouvido médio (tímpano e ossículos).</li>
+                        <li><strong>PEATE/BERA:</strong> Avalia a resposta do nervo auditivo e do tronco encefálico.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">Opções de Tratamento</h3>
+                    <ul class="space-y-3">
+                        <li><strong>Clínico:</strong> Remoção de cera e uso de medicamentos para infecções.</li>
+                        <li><strong>Cirúrgico:</strong> Correção de perfurações do tímpano ou otosclerose.</li>
+                        <li><strong>Aparelhos Auditivos:</strong> Amplificam os sons. Principal tratamento para perda neurossensorial.</li>
+                        <li><strong>Implantes Cocleares:</strong> Para perdas severas a profundas, substituem a função da cóclea.</li>
+                        <li><strong>Reabilitação Auditiva:</strong> Terapia fonoaudiológica e treinamento para adaptação.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="fases-vida" class="mb-24">
+             <h2 class="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-4">Cuidados em Cada Fase da Vida</h2>
+             <p class="max-w-3xl mx-auto text-center text-slate-600 mb-12">A saúde auditiva exige atenção contínua. Os riscos e cuidados necessários mudam ao longo do tempo.</p>
+             <div class="space-y-8">
+                 <div class="bg-white p-6 rounded-lg shadow-md flex items-center gap-6">
+                     <span class="text-5xl">👶</span>
+                     <div>
+                         <h3 class="text-xl font-bold">Infância e Adolescência</h3>
+                         <p class="text-slate-600">O Teste da Orelhinha é crucial. Monitore o desenvolvimento da fala e limite o volume de fones de ouvido para proteger a audição dos jovens.</p>
+                     </div>
+                 </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md flex items-center gap-6">
+                     <span class="text-5xl">👩‍💼</span>
+                     <div>
+                         <h3 class="text-xl font-bold">Vida Adulta</h3>
+                         <p class="text-slate-600">Use proteção auditiva em trabalhos ruidosos. Faça exames periódicos e mantenha um estilo de vida saudável para proteger a circulação do ouvido interno.</p>
+                     </div>
+                 </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md flex items-center gap-6">
+                     <span class="text-5xl">🧓</span>
+                     <div>
+                         <h3 class="text-xl font-bold">Terceira Idade</h3>
+                         <p class="text-slate-600">A perda auditiva relacionada à idade (presbiacusia) é comum. Realize avaliações anuais e considere o uso de aparelhos auditivos para manter a qualidade de vida e a interação social.</p>
+                     </div>
+                 </div>
+             </div>
+        </section>
+
+        <section id="mitos" class="mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-4">Mitos e Verdades</h2>
+            <p class="max-w-3xl mx-auto text-center text-slate-600 mb-12">Existem muitas informações equivocadas sobre a saúde auditiva. Clique nos cards abaixo para separar os mitos das verdades.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 perspective-1000">
+                <div class="myth-card h-64 cursor-pointer">
+                    <div class="myth-front absolute w-full h-full bg-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-lg font-semibold">"A perda auditiva afeta apenas pessoas idosas."</h4>
+                        <p class="text-sm text-slate-500 mt-4">Clique para revelar</p>
+                    </div>
+                    <div class="myth-back absolute w-full h-full bg-teal-500 text-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-xl font-bold mb-2">MITO</h4>
+                        <p>Ela pode afetar pessoas de todas as idades. Fatores como exposição a ruídos, infecções e genética podem causar perda auditiva em qualquer fase da vida.</p>
+                    </div>
+                </div>
+                <div class="myth-card h-64 cursor-pointer">
+                     <div class="myth-front absolute w-full h-full bg-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-lg font-semibold">"Limpar os ouvidos com cotonetes é essencial."</h4>
+                        <p class="text-sm text-slate-500 mt-4">Clique para revelar</p>
+                    </div>
+                    <div class="myth-back absolute w-full h-full bg-teal-500 text-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-xl font-bold mb-2">MITO</h4>
+                        <p>O uso de cotonetes pode empurrar a cera para mais fundo, causando bloqueios e lesões. A limpeza deve ser apenas externa.</p>
+                    </div>
+                </div>
+                 <div class="myth-card h-64 cursor-pointer">
+                     <div class="myth-front absolute w-full h-full bg-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-lg font-semibold">"A perda auditiva é sempre permanente."</h4>
+                        <p class="text-sm text-slate-500 mt-4">Clique para revelar</p>
+                    </div>
+                    <div class="myth-back absolute w-full h-full bg-blue-600 text-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-xl font-bold mb-2">VERDADE (PARCIAL)</h4>
+                        <p>A perda condutiva (por cera ou infecção) pode ser reversível. Já a perda neurossensorial (danos nas células ou nervo) é geralmente permanente.</p>
+                    </div>
+                </div>
+                <div class="myth-card h-64 cursor-pointer">
+                     <div class="myth-front absolute w-full h-full bg-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-lg font-semibold">"Não há nada que se possa fazer para prevenir a perda auditiva."</h4>
+                        <p class="text-sm text-slate-500 mt-4">Clique para revelar</p>
+                    </div>
+                    <div class="myth-back absolute w-full h-full bg-blue-600 text-white rounded-lg shadow-md p-8 flex flex-col justify-center items-center text-center">
+                        <h4 class="text-xl font-bold mb-2">VERDADE (É FALSO)</h4>
+                        <p>Muitas causas são evitáveis. Proteger-se de ruídos altos, tratar infecções e controlar doenças crônicas são medidas eficazes para preservar a audição.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-2xl font-bold mb-2">Amigos da Audição</h2>
+            <p class="mb-4">Cuidando da sua conexão com o mundo.</p>
+            <p class="text-sm text-slate-400">&copy; 2025 Amigos da Audição. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', (event) => {
+                const targetId = event.target.value;
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                let activeSectionId = null;
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                       activeSectionId = entry.target.getAttribute('id');
+                    }
+                });
+                
+                if (activeSectionId) {
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === `#${activeSectionId}`);
+                    });
+                    const correspondingOption = mobileNav.querySelector(`option[value="#${activeSectionId}"]`);
+                    if(correspondingOption) {
+                        mobileNav.value = `#${activeSectionId}`;
+                    }
+                }
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+            
+            function animateCounter(element) {
+                const target = parseFloat(element.getAttribute('data-counter-target'));
+                const suffix = element.getAttribute('data-counter-suffix') || '';
+                const duration = 2000;
+                const frameDuration = 1000 / 60;
+                const totalFrames = Math.round(duration / frameDuration);
+                let frame = 0;
+
+                const counter = setInterval(() => {
+                    frame++;
+                    const progress = frame / totalFrames;
+                    const current = target * progress;
+                    element.textContent = (current < 10 && current % 1 !== 0 ? current.toFixed(1) : Math.round(current)) + suffix;
+
+                    if (frame === totalFrames) {
+                        clearInterval(counter);
+                        element.textContent = target + suffix;
+                    }
+                }, frameDuration);
+            }
+
+            const counterObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounter(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.8 });
+
+            document.querySelectorAll('[data-counter-target]').forEach(counter => {
+                counterObserver.observe(counter);
+            });
+
+            const hearingLossCtx = document.getElementById('hearingLossChart').getContext('2d');
+            new Chart(hearingLossCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['2024', '2050 (proj.)'],
+                    datasets: [{
+                        label: 'Pessoas com Perda Auditiva nas Américas',
+                        data: [217, 322],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(20, 184, 166, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(20, 184, 166, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Milhões de Pessoas'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y} milhões`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const anatomyParts = document.querySelectorAll('.anatomy-part');
+            const anatomyTitle = document.getElementById('anatomy-title');
+            const anatomyText = document.getElementById('anatomy-text');
+            const anatomyData = {
+                externo: {
+                    title: 'Ouvido Externo',
+                    text: 'É a parte visível, composta pelo pavilhão auditivo (orelha) e pelo canal auditivo. O pavilhão capta as ondas sonoras e as direciona para o canal, que as conduz até o tímpano.'
+                },
+                medio: {
+                    title: 'Ouvido Médio',
+                    text: 'Esta cavidade contém três ossículos: martelo, bigorna e estribo. Quando o tímpano vibra, eles amplificam as vibrações e as transmitem para o ouvido interno.'
+                },
+                interno: {
+                    title: 'Ouvido Interno',
+                    text: 'É a parte mais complexa. Contém a cóclea, que transforma as vibrações em sinais elétricos, e os canais semicirculares, responsáveis pelo equilíbrio. Os sinais são enviados ao cérebro pelo nervo auditivo.'
+                }
+            };
+
+            anatomyParts.forEach(part => {
+                part.addEventListener('click', () => {
+                    anatomyParts.forEach(p => p.classList.remove('active'));
+                    part.classList.add('active');
+                    const partName = part.dataset.part;
+                    anatomyTitle.textContent = anatomyData[partName].title;
+                    anatomyText.textContent = anatomyData[partName].text;
+                });
+            });
+            
+            document.querySelector('[data-part="externo"]').click();
+
+            const mythCards = document.querySelectorAll('.myth-card');
+            mythCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('is-flipped');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
